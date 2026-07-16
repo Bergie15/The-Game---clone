@@ -2,18 +2,6 @@
   'use strict';
 
   const HAND_SIZE_BY_PLAYERS = { 1: 8, 2: 8, 3: 7, 4: 6, 5: 6 };
-
-  /** @type {{
-   *  players: {name: string, hand: number[]}[],
-   *  currentPlayerIndex: number,
-   *  deck: number[],
-   *  piles: {asc1: number, asc2: number, desc1: number, desc2: number},
-   *  handLimit: number,
-   *  cardsPlayedThisTurn: number,
-   *  minPlaysRequired: number,
-   *  turnHistory: {pileKey: string, prevValue: number, card: number, wasBackTen: boolean}[],
-   *  selectedCard: number|null,
-   * }} */
   let state = null;
 
   const el = (id) => document.getElementById(id);
@@ -30,8 +18,6 @@
     Object.values(screens).forEach((s) => s.classList.remove('active'));
     screens[name].classList.add('active');
   }
-
-  // ---------- Setup screen ----------
 
   const playerCountSelect = el('player-count');
   const playerNamesContainer = el('player-names');
@@ -72,8 +58,6 @@
     startGame(players);
   });
 
-  // ---------- Game setup ----------
-
   function shuffledDeck() {
     const deck = [];
     for (let n = 2; n <= 99; n++) deck.push(n);
@@ -88,9 +72,7 @@
     const handLimit = HAND_SIZE_BY_PLAYERS[players.length] || 6;
     const deck = shuffledDeck();
 
-    players.forEach((p) => {
-      p.hand = deck.splice(0, handLimit);
-    });
+    players.forEach((p) => { p.hand = deck.splice(0, handLimit); });
 
     state = {
       players,
@@ -106,8 +88,6 @@
 
     beginTurn();
   }
-
-  // ---------- Turn flow ----------
 
   function beginTurn() {
     state.cardsPlayedThisTurn = 0;
@@ -139,9 +119,7 @@
   function isLegalPlay(card, pileKey, piles) {
     const value = piles[pileKey];
     const ascending = pileKey === 'asc1' || pileKey === 'asc2';
-    if (ascending) {
-      return card > value || card === value - 10;
-    }
+    if (ascending) return card > value || card === value - 10;
     return card < value || card === value + 10;
   }
 
@@ -176,7 +154,6 @@
 
     renderGame();
 
-    // If player still hasn't met the minimum and has no more legal moves, it's a loss.
     if (state.cardsPlayedThisTurn < state.minPlaysRequired && !hasAnyLegalMove(player.hand, state.piles)) {
       endGame(false, `${player.name} could not play the required minimum of ${state.minPlaysRequired} card(s).`);
     }
@@ -197,14 +174,12 @@
   function endTurn() {
     const player = state.players[state.currentPlayerIndex];
 
-    // Draw back up to hand limit.
     while (player.hand.length < state.handLimit && state.deck.length > 0) {
       player.hand.push(state.deck.shift());
     }
     player.hand.sort((a, b) => a - b);
 
-    const totalCardsRemaining =
-      state.deck.length + state.players.reduce((sum, p) => sum + p.hand.length, 0);
+    const totalCardsRemaining = state.deck.length + state.players.reduce((sum, p) => sum + p.hand.length, 0);
 
     if (totalCardsRemaining === 0) {
       endGame(true, 'All 98 cards were played. Victory!');
@@ -215,9 +190,7 @@
     beginTurn();
   }
 
-  function concede() {
-    endGame(false, 'You gave up.');
-  }
+  function concede() { endGame(false, 'You gave up.'); }
 
   function endGame(won, message) {
     const playedCount = 98 - (state.deck.length + state.players.reduce((s, p) => s + p.hand.length, 0));
@@ -236,13 +209,11 @@
   el('btn-end-turn').addEventListener('click', endTurn);
   el('btn-play-again').addEventListener('click', () => showScreen('setup'));
 
-  // ---------- Rendering ----------
-
   const pileMeta = {
-    asc1: { label: 'Ascending', dir: 'up', arrow: '↑' },
-    asc2: { label: 'Ascending', dir: 'up', arrow: '↑' },
-    desc1: { label: 'Descending', dir: 'down', arrow: '↓' },
-    desc2: { label: 'Descending', dir: 'down', arrow: '↓' },
+    asc1: { label: 'Ascending', dir: 'up', arrow: '\u2191' },
+    asc2: { label: 'Ascending', dir: 'up', arrow: '\u2191' },
+    desc1: { label: 'Descending', dir: 'down', arrow: '\u2193' },
+    desc2: { label: 'Descending', dir: 'down', arrow: '\u2193' },
   };
 
   function renderGame() {
@@ -256,7 +227,7 @@
     const remaining = Math.max(0, state.minPlaysRequired - state.cardsPlayedThisTurn);
     el('turn-message').innerHTML = remaining > 0
       ? `Play at least <strong>${remaining}</strong> more card(s) this turn.`
-      : `Minimum met — play more or <strong>End Turn</strong>.`;
+      : `Minimum met &#8212; play more or <strong>End Turn</strong>.`;
 
     el('btn-undo').disabled = state.turnHistory.length === 0;
     el('btn-end-turn').disabled = state.cardsPlayedThisTurn < state.minPlaysRequired;
@@ -273,6 +244,7 @@
       const meta = pileMeta[key];
       const pileEl = document.createElement('div');
       pileEl.className = 'pile';
+      pileEl.dataset.dir = meta.dir;
 
       const selected = state.selectedCard;
       let legal = false;
@@ -307,20 +279,28 @@
     container.innerHTML = '';
     const player = state.players[state.currentPlayerIndex];
     const sorted = [...player.hand].sort((a, b) => a - b);
+    const n = sorted.length;
+    const center = (n - 1) / 2;
 
-    sorted.forEach((card) => {
+    sorted.forEach((card, i) => {
       const cardEl = document.createElement('div');
       const legalPiles = legalPilesFor(card, state.piles);
       const playable = legalPiles.length > 0;
       cardEl.className = `card ${playable ? 'playable' : 'unplayable'}`;
       if (state.selectedCard === card) cardEl.classList.add('selected');
+
+      const offset = i - center;
+      const rot = Math.max(-16, Math.min(16, offset * 4));
+      const lift = Math.abs(offset) * 7;
+      cardEl.style.setProperty('--rot', `${rot}deg`);
+      cardEl.style.setProperty('--lift', `${lift}px`);
+
       cardEl.textContent = card;
+      cardEl.tabIndex = playable ? 0 : -1;
 
       cardEl.addEventListener('click', () => {
         if (!playable) return;
-
         if (state.selectedCard === card) {
-          // Second click on same card: auto-play if only one legal pile, else deselect.
           if (legalPiles.length === 1) {
             playCard(card, legalPiles[0]);
           } else {
@@ -329,7 +309,6 @@
           }
           return;
         }
-
         state.selectedCard = card;
         renderGame();
       });
