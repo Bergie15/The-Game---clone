@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Game — Cooperative Card Game</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SETUP SCREEN -->
+  <section id="screen-setup" class="screen active">
+    <div class="card-panel">
+      <h1>The Game</h1>
+      <p class="subtitle">A cooperative card game. Play all 98 cards onto the four piles before the deck and your hands run dry.</p>
+
+      <div class="field">
+        <label for="player-count">Number of players</label>
+        <select id="player-count">
+          <option value="1">1 (Solo)</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+
+      <div id="player-names"></div>
+
+      <button id="btn-start" class="btn primary">Start Game</button>
+
+      <button id="btn-rules" class="btn ghost">How to Play</button>
+    </div>
+  </section>
+
+  <!-- RULES SCREEN -->
+  <section id="screen-rules" class="screen">
+    <div class="card-panel rules-panel">
+      <h2>How to Play</h2>
+      <ul class="rules-list">
+        <li>There are four piles: two <strong>ascending</strong> piles starting at <strong>1</strong>, and two <strong>descending</strong> piles starting at <strong>100</strong>.</li>
+        <li>On an ascending pile, you must play a card <strong>higher</strong> than the top card. On a descending pile, you must play a card <strong>lower</strong> than the top card.</li>
+        <li><strong>The 10 trick:</strong> you may play a card exactly <strong>10 lower</strong> on an ascending pile, or exactly <strong>10 higher</strong> on a descending pile — sending that pile back the "wrong" way.</li>
+        <li>On your turn you must play at least <strong>2 cards</strong> (only <strong>1</strong> if the draw pile is empty).</li>
+        <li>After playing, draw back up to your hand limit from the deck (if any cards remain).</li>
+        <li>Hand size: <strong>8 cards</strong> for 1–2 players, <strong>7</strong> for 3 players, <strong>6</strong> for 4–5 players.</li>
+        <li>You win together if <strong>all 98 cards</strong> get played. You lose if a player cannot legally play the minimum required cards.</li>
+        <li>Since you can't show your hand to teammates, talk in vague terms only ("I have something close to 60") — no exact numbers!</li>
+      </ul>
+      <button id="btn-rules-back" class="btn primary">Back</button>
+    </div>
+  </section>
+
+  <!-- PASS SCREEN (hide hand between players) -->
+  <section id="screen-pass" class="screen">
+    <div class="card-panel pass-panel">
+      <h2>Pass the device to</h2>
+      <div id="pass-player-name" class="pass-name"></div>
+      <p class="subtitle">Don't let other players see your hand.</p>
+      <button id="btn-ready" class="btn primary">I'm Ready</button>
+    </div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <div class="game-wrap">
+
+      <div class="topbar">
+        <div class="stat">
+          <span class="stat-label">Deck</span>
+          <span class="stat-value" id="deck-count">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Played</span>
+          <span class="stat-value"><span id="played-count">0</span>/98</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Turn</span>
+          <span class="stat-value" id="current-player-label">—</span>
+        </div>
+        <button id="btn-concede" class="btn ghost small">Give Up</button>
+      </div>
+
+      <div class="piles" id="piles">
+        <!-- pile elements injected by JS -->
+      </div>
+
+      <div class="turn-info">
+        <span id="turn-message">Play at least <strong>2</strong> card(s) this turn.</span>
+        <button id="btn-undo" class="btn ghost small" disabled>Undo Last Play</button>
+      </div>
+
+      <div class="hand-area">
+        <h3>Your Hand</h3>
+        <div class="hand" id="hand"></div>
+      </div>
+
+      <button id="btn-end-turn" class="btn primary" disabled>End Turn</button>
+    </div>
+  </section>
+
+  <!-- GAME OVER SCREEN -->
+  <section id="screen-over" class="screen">
+    <div class="card-panel over-panel">
+      <h2 id="over-title">Game Over</h2>
+      <p id="over-message" class="subtitle"></p>
+      <div class="over-stats">
+        <div class="stat">
+          <span class="stat-label">Cards Played</span>
+          <span class="stat-value" id="over-played">0/98</span>
+        </div>
+      </div>
+      <button id="btn-play-again" class="btn primary">Play Again</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

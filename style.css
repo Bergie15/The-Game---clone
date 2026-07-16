@@ -1,0 +1,331 @@
+:root {
+  --bg-1: #0f172a;
+  --bg-2: #1e293b;
+  --accent: #38bdf8;
+  --accent-2: #a78bfa;
+  --up-color: #22c55e;
+  --down-color: #ef4444;
+  --card-bg: #f8fafc;
+  --card-text: #0f172a;
+  --panel-bg: rgba(15, 23, 42, 0.6);
+  --text-light: #f1f5f9;
+  --text-dim: #94a3b8;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: radial-gradient(circle at top, var(--bg-2), var(--bg-1) 70%);
+  color: var(--text-light);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  max-width: 720px;
+}
+
+.screen.active {
+  display: block;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-panel {
+  background: var(--panel-bg);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: var(--radius);
+  padding: 32px;
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 2.4rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+h2 { margin-top: 0; }
+
+.subtitle {
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.field {
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+select, input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+#player-names {
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 6px 4px 0;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn.primary {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #0f172a;
+  width: 100%;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: var(--text-light);
+  width: 100%;
+}
+
+.btn.small {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rules-list {
+  text-align: left;
+  line-height: 1.6;
+  padding-left: 20px;
+}
+.rules-list li { margin-bottom: 10px; }
+
+.pass-panel { padding: 48px 32px; }
+.pass-name {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 12px 0 8px;
+  color: var(--accent);
+}
+
+/* GAME SCREEN */
+.game-wrap {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 60px;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.topbar .btn { margin-left: auto; }
+
+.piles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+@media (min-width: 600px) {
+  .piles { grid-template-columns: repeat(4, 1fr); }
+}
+
+.pile {
+  background: var(--panel-bg);
+  border-radius: var(--radius);
+  padding: 16px 8px;
+  text-align: center;
+  border: 2px solid rgba(148, 163, 184, 0.15);
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pile.playable {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  cursor: pointer;
+}
+
+.pile.playable.back-ten {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3);
+}
+
+.pile-dir {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.pile-dir.up { color: var(--up-color); }
+.pile-dir.down { color: var(--down-color); }
+
+.pile-value {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.pile-arrow {
+  font-size: 1rem;
+  margin-left: 4px;
+}
+
+.pile-hint {
+  font-size: 0.65rem;
+  color: var(--accent-2);
+  min-height: 14px;
+  margin-top: 4px;
+}
+
+.turn-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+}
+
+.hand-area h3 {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+  min-height: 90px;
+}
+
+.card {
+  background: var(--card-bg);
+  color: var(--card-text);
+  width: 64px;
+  height: 88px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  border: 3px solid transparent;
+  transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+}
+
+.card.playable:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent);
+}
+
+.card.selected {
+  border-color: var(--accent-2);
+  transform: translateY(-8px);
+}
+
+.card.unplayable {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+#btn-end-turn { margin-bottom: 24px; }
+
+.over-panel .over-stats {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 480px) {
+  .card-panel { padding: 22px; }
+  h1 { font-size: 1.9rem; }
+  .card { width: 52px; height: 74px; font-size: 1.25rem; }
+}
