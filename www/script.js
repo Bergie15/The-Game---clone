@@ -16,6 +16,32 @@
    * }} */
   let state = null;
 
+  const STORAGE_KEY = 'upAndUnderGameState';
+
+  function saveState() {
+    if (!state) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* storage unavailable (private mode, quota) — game still works, just won't survive a restart */
+    }
+  }
+
+  function clearSavedState() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+  }
+
+  function loadSavedState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   const el = (id) => document.getElementById(id);
 
   const screens = {
@@ -29,6 +55,78 @@
   function showScreen(name) {
     Object.values(screens).forEach((s) => s.classList.remove('active'));
     screens[name].classList.add('active');
+
+    if (name === 'game') {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+  }
+
+  // ---------- Native-ish polish via standard Web APIs (no native plugins needed) ----------
+
+  function vibrateTap() {
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate(15);
+      } catch (e) {}
+    }
+  }
+
+  let wakeLock = null;
+
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) {
+      // not fatal — e.g. tab hidden, battery saver, or unsupported context
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && screens.game.classList.contains('active')) {
+      requestWakeLock();
+    }
+  });
+
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('portrait').catch(() => {});
+  }
+
+  // ---------- Confirm modal (replaces native confirm()) ----------
+
+  const modalOverlay = el('modal-overlay');
+  const modalMessage = el('modal-message');
+  const modalConfirmBtn = el('modal-confirm');
+  const modalCancelBtn = el('modal-cancel');
+
+  function showConfirmModal(message, onConfirm) {
+    modalMessage.textContent = message;
+    modalOverlay.classList.remove('hidden');
+
+    function cleanup() {
+      modalOverlay.classList.add('hidden');
+      modalConfirmBtn.removeEventListener('click', onConfirmClick);
+      modalCancelBtn.removeEventListener('click', onCancelClick);
+    }
+    function onConfirmClick() {
+      cleanup();
+      onConfirm();
+    }
+    function onCancelClick() {
+      cleanup();
+    }
+
+    modalConfirmBtn.addEventListener('click', onConfirmClick);
+    modalCancelBtn.addEventListener('click', onCancelClick);
   }
 
   // ---------- Setup screen ----------
@@ -122,6 +220,8 @@
       return;
     }
 
+    saveState();
+
     if (state.players.length > 1) {
       el('pass-player-name').textContent = player.name;
       showScreen('pass');
@@ -174,6 +274,7 @@
     state.turnHistory.push({ pileKey, prevValue, card, wasBackTen });
     state.selectedCard = null;
 
+    vibrateTap();
     renderGame();
 
     // If player still hasn't met the minimum and has no more legal moves, it's a loss.
@@ -225,11 +326,12 @@
     el('over-title').style.color = won ? 'var(--success)' : 'var(--danger)';
     el('over-message').textContent = message;
     el('over-played').textContent = `${playedCount}/98`;
+    clearSavedState();
     showScreen('over');
   }
 
   el('btn-concede').addEventListener('click', () => {
-    if (confirm('Give up and end the game now?')) concede();
+    showConfirmModal('Give up and end the game now?', concede);
   });
 
   el('btn-undo').addEventListener('click', undoLastPlay);
@@ -239,11 +341,16 @@
   // ---------- Rendering ----------
 
   const pileMeta = {
-    asc1: { label: 'Ascending', dir: 'up', arrow: '↑' },
-    asc2: { label: 'Ascending', dir: 'up', arrow: '↑' },
-    desc1: { label: 'Descending', dir: 'down', arrow: '↓' },
-    desc2: { label: 'Descending', dir: 'down', arrow: '↓' },
+    asc1: { label: 'Ascending', dir: 'up' },
+    asc2: { label: 'Ascending', dir: 'up' },
+    desc1: { label: 'Descending', dir: 'down' },
+    desc2: { label: 'Descending', dir: 'down' },
   };
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const pad3 = (n) => String(n).padStart(3, '0');
+  const neutralCardImg = (card) => `cards/neutral/card_${pad2(card)}.png`;
+  const pileCardImg = (dir, value) => `cards/full/${dir}_${pad3(value)}.png`;
 
   function renderGame() {
     const player = state.players[state.currentPlayerIndex];
@@ -263,6 +370,7 @@
 
     renderPiles();
     renderHand();
+    saveState();
   }
 
   function renderPiles() {
@@ -288,7 +396,9 @@
 
       pileEl.innerHTML = `
         <div class="pile-dir ${meta.dir}">${meta.label}</div>
-        <div class="pile-value">${value}<span class="pile-arrow">${meta.arrow}</span></div>
+        <div class="pile-card-wrap">
+          <img class="pile-card-img" src="${pileCardImg(meta.dir, value)}" alt="${value}" draggable="false">
+        </div>
         <div class="pile-hint">${backTen ? 'Back 10!' : ''}</div>
       `;
 
@@ -314,7 +424,7 @@
       const playable = legalPiles.length > 0;
       cardEl.className = `card ${playable ? 'playable' : 'unplayable'}`;
       if (state.selectedCard === card) cardEl.classList.add('selected');
-      cardEl.textContent = card;
+      cardEl.innerHTML = `<img src="${neutralCardImg(card)}" alt="${card}" draggable="false">`;
 
       cardEl.addEventListener('click', () => {
         if (!playable) return;
@@ -337,4 +447,60 @@
       container.appendChild(cardEl);
     });
   }
+
+  // ---------- Resume in-progress game (survives app backgrounding/kill) ----------
+
+  function tryRestoreGame() {
+    const saved = loadSavedState();
+    if (!saved) return;
+
+    state = saved;
+    const player = state.players[state.currentPlayerIndex];
+
+    if (state.players.length > 1) {
+      el('pass-player-name').textContent = player.name;
+      showScreen('pass');
+    } else {
+      showScreen('game');
+      renderGame();
+    }
+  }
+
+  tryRestoreGame();
+
+  // ---------- Hardware/browser back button ----------
+  // Capacitor's default Android bridge drives the hardware back button through
+  // the WebView's own session history (goes back if possible, exits otherwise) —
+  // so intercepting it via the standard History API works with no native plugin,
+  // and the same code also makes the browser's own back button behave sensibly.
+
+  function armBackGuard() {
+    history.pushState({ backGuard: true }, '', location.href);
+  }
+
+  armBackGuard();
+
+  window.addEventListener('popstate', () => {
+    const activeScreen = Object.keys(screens).find((name) => screens[name].classList.contains('active'));
+
+    switch (activeScreen) {
+      case 'rules':
+      case 'over':
+        showScreen('setup');
+        armBackGuard();
+        break;
+      case 'game':
+        armBackGuard();
+        showConfirmModal('Give up and end the game now?', concede);
+        break;
+      case 'pass':
+        // Going back here would reveal the previous player's turn — swallow it.
+        armBackGuard();
+        break;
+      default:
+        // Nothing to go back to from setup — let the browser/OS handle it
+        // naturally (closes the tab / exits the app).
+        break;
+    }
+  });
 })();

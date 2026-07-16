@@ -1,0 +1,19 @@
+{
+  "name": "up-and-under",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Up & Under — a cooperative card game",
+  "scripts": {
+    "start": "npx http-server www -p 8000 -c-1",
+    "android": "npx cap open android",
+    "sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

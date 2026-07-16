@@ -1,16 +1,44 @@
-# The Game — clone
+# Up & Under
 
-A browser-based clone of *The Game*, the cooperative card game by Steffen Benndorf. Play cards 2–99 onto four piles — two ascending from 1, two descending from 100 — using the "exactly 10 back" trick to reverse a pile's direction. Supports 1–5 players in local pass-and-play mode.
+A browser-based cooperative card game, inspired by classic ascending/descending pile-based card games. Play cards 2–99 onto four piles — two ascending from 1, two descending from 100 — using the "exactly 10 back" trick to reverse a pile's direction. Supports 1–5 players in local pass-and-play mode.
 
-## Running it
-
-No build step or dependencies. Open `index.html` directly in a browser, or serve the folder with any static file server, e.g.:
+## Project layout
 
 ```
-python3 -m http.server 8000
+www/         the game itself — index.html, script.js, style.css (Capacitor's webDir)
+resources/   source app icon art (1024x1024), used to generate native icons
+android/     generated native Android project (created by `npx cap add android`, gitignored build output)
+index.html   redirect stub at the repo root — see "GitHub Pages" below
 ```
 
-then visit `http://localhost:8000`.
+The game has no build step — `www/` is plain static HTML/CSS/JS and can be opened or served directly. The root `package.json`/`capacitor.config.json` exist only to wrap that folder for the Android build.
+
+## GitHub Pages
+
+GitHub Pages' simple "deploy from a branch" mode only serves from the repo root or a `/docs` folder — it doesn't know about `www/`. Rather than duplicate the game at the root, the root `index.html` is a one-line redirect stub into `www/index.html`, so Pages (root mode) keeps working with zero extra config. `www/` remains the single real copy of the game. (`.nojekyll` is also present at the root — without it, Pages runs everything through Jekyll, which can misbehave on a plain static site.)
+
+## Running it in a browser
+
+```
+npm install
+npm start
+```
+
+then visit `http://localhost:8000`. (Or just open `www/index.html` directly, or serve the `www/` folder with any static file server.)
+
+## Building the Android app
+
+```
+npx cap add android      # first time only — requires Android Studio / SDK installed
+npm run sync              # copy www/ changes into the native project
+npm run android            # open the project in Android Studio to build/run
+```
+
+To regenerate native icons from `resources/icon.png` after changing the art:
+
+```
+npx capacitor-assets generate --android
+```
 
 ## Rules summary
 
